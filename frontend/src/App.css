@@ -1,0 +1,148 @@
+.card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e4e0;
+  padding: 24px;
+}
+
+h1 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #6b6b66;
+  margin: 0 0 20px;
+}
+
+.upload-zone {
+  border: 1.5px dashed #d4d2cc;
+  border-radius: 8px;
+  padding: 24px 16px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.file-name {
+  font-size: 13px;
+  color: #6b6b66;
+  margin: 8px 0 0;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+select {
+  flex: 1;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #d4d2cc;
+  font-size: 13px;
+}
+
+button {
+  background: #1a73e8;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+button:disabled {
+  background: #a8c5ed;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #c0392b;
+  font-size: 13px;
+  margin: 0 0 16px;
+}
+
+.task-list {
+  border-top: 1px solid #e5e4e0;
+  padding-top: 16px;
+}
+
+.section-title {
+  font-size: 13px;
+  color: #6b6b66;
+  margin: 0 0 10px;
+}
+
+.empty {
+  font-size: 13px;
+  color: #9b9b96;
+}
+
+.task-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0efea;
+}
+
+.task-row:last-child {
+  border-bottom: none;
+}
+
+.task-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-name {
+  font-size: 13px;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-op {
+  font-size: 12px;
+  color: #9b9b96;
+  margin: 0;
+}
+
+.badge {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.badge-pending {
+  background: #f0efea;
+  color: #6b6b66;
+}
+
+.badge-processing {
+  background: #fdf3dd;
+  color: #b8860b;
+}
+
+.badge-done {
+  background: #e3f3e6;
+  color: #2e7d32;
+}
+
+.badge-failed {
+  background: #fbe5e3;
+  color: #c0392b;
+}
+
+.task-row a {
+  font-size: 12px;
+  color: #1a73e8;
+  text-decoration: none;
+}
