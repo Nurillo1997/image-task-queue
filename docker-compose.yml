@@ -1,0 +1,87 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: image-task-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: image_tasks
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: image-task-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: image-task-api
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/image_tasks
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672//
+      UPLOAD_DIR: /app/storage/uploads
+      RESULT_DIR: /app/storage/results
+    ports:
+      - "8000:8000"
+    volumes:
+      - storage_data:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: image-task-worker
+    command: celery -A api.worker worker --loglevel=INFO
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/image_tasks
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672//
+      UPLOAD_DIR: /app/storage/uploads
+      RESULT_DIR: /app/storage/results
+    volumes:
+      - storage_data:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8000
+    container_name: image-task-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+  storage_data:
