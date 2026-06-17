@@ -20,3 +20,5 @@ frontend/build/
 # IDE
 .vscode/
 .idea/
+# Yuklangan va natija fayllar - bular runtime ma'lumotlari, kod emas
+backend/storage/
