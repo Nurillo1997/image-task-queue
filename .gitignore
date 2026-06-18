@@ -22,3 +22,4 @@ frontend/build/
 .idea/
 # Yuklangan va natija fayllar - bular runtime ma'lumotlari, kod emas
 backend/storage/
+frontend/.vite/

@@ -2,7 +2,7 @@ import uuid
 import enum
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, String, DateTime, Enum
+from sqlalchemy import Column, String, DateTime, Enum, LargeBinary
 from sqlalchemy.dialects.postgresql import UUID
 
 from api.database import Base
@@ -22,7 +22,8 @@ class Task(Base):
     original_filename = Column(String, nullable=False)
     operation = Column(String, nullable=False)
     status = Column(Enum(TaskStatus), default=TaskStatus.PENDING, nullable=False)
-    result_path = Column(String, nullable=True)
+    original_image_data = Column(LargeBinary, nullable=False)
+    result_image_data = Column(LargeBinary, nullable=True)
     error_message = Column(String, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(

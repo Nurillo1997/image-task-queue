@@ -1,4 +1,5 @@
 import os
+import io
 import uuid
 
 from PIL import Image, ImageDraw, ImageFont
@@ -6,11 +7,9 @@ from PIL import Image, ImageDraw, ImageFont
 from api.worker import celery_app
 from api.database import SessionLocal
 from api.models import Task, TaskStatus
-from api.config import settings
 
 
 def _resize(img: Image.Image) -> Image.Image:
-    """Rasmni eng katta tomoni 800px bo'lishi uchun proporsional kichraytiradi."""
     max_size = 800
     ratio = min(max_size / img.width, max_size / img.height)
     if ratio >= 1:
@@ -20,15 +19,10 @@ def _resize(img: Image.Image) -> Image.Image:
 
 
 def _grayscale(img: Image.Image) -> Image.Image:
-    """Rasmni oq-qora qiladi."""
     return img.convert("L")
 
 
 def _load_scaled_font(image_width: int) -> ImageFont.ImageFont:
-    """
-    Shrift hajmini rasm kengligiga proporsional qiladi (kengligining ~4%i),
-    shunda katta rasmda katta, kichik rasmda kichikroq matn chiqadi.
-    """
     font_size = max(18, int(image_width * 0.04))
     candidate_paths = [
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
@@ -41,12 +35,11 @@ def _load_scaled_font(image_width: int) -> ImageFont.ImageFont:
 
 
 def _watermark(img: Image.Image) -> Image.Image:
-    """Rasmning pastki o'ng burchagiga shaffof matnli watermark qo'shadi."""
     img = img.convert("RGBA")
     overlay = Image.new("RGBA", img.size, (255, 255, 255, 0))
     draw = ImageDraw.Draw(overlay)
 
-    text = "Nurillo's Image Processor"
+    text = "image-task-queue"
     font = _load_scaled_font(img.width)
 
     bbox = draw.textbbox((0, 0), text, font=font)
@@ -66,14 +59,7 @@ OPERATIONS = {
 
 
 @celery_app.task(name="api.tasks.process_image")
-def process_image(task_id: str, input_path: str, operation: str):
-    """
-    RabbitMQ navbatidan olingan asosiy task.
-    1. DB'da statusni "processing" qiladi
-    2. Pillow bilan tanlangan operatsiyani bajaradi
-    3. Natijani diskka saqlaydi, DB'da statusni "done" qiladi
-    4. Xato bo'lsa, statusni "failed" qiladi va sababini yozadi
-    """
+def process_image(task_id: str):
     db = SessionLocal()
     try:
         task = db.query(Task).filter(Task.id == uuid.UUID(task_id)).first()
@@ -83,17 +69,15 @@ def process_image(task_id: str, input_path: str, operation: str):
         task.status = TaskStatus.PROCESSING
         db.commit()
 
-        img = Image.open(input_path)
-        transform = OPERATIONS[operation]
+        img = Image.open(io.BytesIO(task.original_image_data))
+        transform = OPERATIONS[task.operation]
         result_img = transform(img)
 
-        os.makedirs(settings.result_dir, exist_ok=True)
-        result_filename = f"{task_id}.jpg"
-        result_path = os.path.join(settings.result_dir, result_filename)
-        result_img.convert("RGB").save(result_path, "JPEG", quality=90)
+        buffer = io.BytesIO()
+        result_img.convert("RGB").save(buffer, "JPEG", quality=90)
 
         task.status = TaskStatus.DONE
-        task.result_path = result_path
+        task.result_image_data = buffer.getvalue()
         db.commit()
 
     except Exception as exc:
