@@ -1,5 +1,12 @@
 # Image Task Queue
 
+# Image Task Queue
+
+**Live demo**: [https://image-task-queue.onrender.com/](https://image-task-queue.onrender.com/)
+**API docs**: [https://image-task-api.onrender.com/docs](https://image-task-api.onrender.com/docs)
+
+> Note: backend services run on Render's free/starter tier and may take a few seconds to wake up if idle.
+
 Asynchronous image processing service built with FastAPI, RabbitMQ, Celery, and PostgreSQL. Users upload an image and select an operation (resize, watermark, or grayscale); the API queues the job instead of blocking on it, a Celery worker picks it up and processes it, and the frontend polls for status until the result is ready to download.
 
 ## Why this architecture
