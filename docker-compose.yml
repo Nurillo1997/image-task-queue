@@ -56,7 +56,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: image-task-worker
-    command: celery -A api.worker worker --loglevel=INFO
+    command: celery -A api.worker worker --loglevel=INFO --concurrency=2
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/image_tasks
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672//
