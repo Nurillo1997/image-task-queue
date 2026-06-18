@@ -1,13 +1,11 @@
-import os
 import uuid
 
-from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from api.database import get_db
 from api.models import Task, TaskStatus
 from api.tasks import process_image, OPERATIONS
-from api.config import settings
 
 router = APIRouter(prefix="/api/v1/images", tags=["images"])
 
@@ -39,22 +37,17 @@ async def upload_image(
 
     task_id = uuid.uuid4()
 
-    os.makedirs(settings.upload_dir, exist_ok=True)
-    extension = os.path.splitext(file.filename)[1]
-    input_path = os.path.join(settings.upload_dir, f"{task_id}{extension}")
-    with open(input_path, "wb") as f:
-        f.write(contents)
-
     task = Task(
         id=task_id,
         original_filename=file.filename,
         operation=operation,
         status=TaskStatus.PENDING,
+        original_image_data=contents,
     )
     db.add(task)
     db.commit()
 
-    process_image.delay(str(task_id), input_path, operation)
+    process_image.delay(str(task_id))
 
     return {"task_id": str(task_id), "status": task.status}
 
@@ -76,12 +69,10 @@ def get_status(task_id: uuid.UUID, db: Session = Depends(get_db)):
 
 @router.get("/result/{task_id}")
 def get_result(task_id: uuid.UUID, db: Session = Depends(get_db)):
-    from fastapi.responses import FileResponse
-
     task = db.query(Task).filter(Task.id == task_id).first()
     if task is None:
         raise HTTPException(status_code=404, detail="Task topilmadi")
     if task.status != TaskStatus.DONE:
         raise HTTPException(status_code=409, detail=f"Task hali tayyor emas: {task.status}")
 
-    return FileResponse(task.result_path)
+    return Response(content=task.result_image_data, media_type="image/jpeg")
